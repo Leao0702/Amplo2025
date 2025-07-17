@@ -5,7 +5,7 @@ from datetime import datetime, date
 from streamlit_autorefresh import st_autorefresh
 
 # === Atualização automática a cada 30 segundos ===
-st_autorefresh(interval=60 * 1000, key="auto_refresh")
+st_autorefresh(interval=120 * 1000, key="auto_refresh")
 
 # === Função para formatar data ===
 def formatar_data(data_iso):
