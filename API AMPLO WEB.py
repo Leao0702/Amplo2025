@@ -35,7 +35,7 @@ def carregar_transacoes():
             page = 1
 
             while True:
-                url = f"{url_base_tx}{manager_id}?page={page}"
+                url = f"{url_base_tx}{manager_id}?page={page}&limit=100&startDate=2000-01-01"
                 try:
                     res_tx = requests.get(url)
                     if res_tx.status_code != 200:
