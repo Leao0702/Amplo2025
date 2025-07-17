@@ -3,10 +3,9 @@ import pandas as pd
 import requests
 from datetime import datetime, date
 from streamlit_autorefresh import st_autorefresh
-from pytz import timezone  # <-- Adicionado para corrigir o fuso
 
-# === Atualização automática a cada 2 minutos ===
-st_autorefresh(interval=120 * 1000, key="auto_refresh")
+# === Atualização automática a cada 30 segundos ===
+st_autorefresh(interval=60 * 1000, key="auto_refresh")
 
 # === Função para formatar data ===
 def formatar_data(data_iso):
@@ -36,7 +35,7 @@ def carregar_transacoes():
             page = 1
 
             while True:
-                url = f"{url_base_tx}{manager_id}?page={page}&limit=100&startDate=2000-01-01"
+                url = f"{url_base_tx}{manager_id}?page={page}"
                 try:
                     res_tx = requests.get(url)
                     if res_tx.status_code != 200:
@@ -73,10 +72,8 @@ def carregar_transacoes():
 st.set_page_config(page_title="Painel de Transações", layout="wide")
 st.title("📊 Painel de Transações Amplo - API em Tempo Real")
 
-# === Timestamp de atualização com fuso de Brasília ===
-br_tz = timezone("America/Sao_Paulo")
-hora_atual = datetime.now(br_tz).strftime('%H:%M:%S')
-st.sidebar.markdown(f"⏰ Última atualização: `{hora_atual}`")
+# === Timestamp de atualização ===
+st.sidebar.markdown(f"⏰ Última atualização: {datetime.now().strftime('%H:%M:%S')}")
 
 # === Carregar dados ===
 df = carregar_transacoes()
@@ -138,4 +135,5 @@ st.download_button(
     file_name="transacoes_filtradas.csv",
     mime="text/csv"
 )
+
 
