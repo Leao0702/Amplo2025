@@ -3,8 +3,9 @@ import pandas as pd
 import requests
 from datetime import datetime, date
 from streamlit_autorefresh import st_autorefresh
+from pytz import timezone  # <-- Adicionado para corrigir o fuso
 
-# === Atualização automática a cada 30 segundos ===
+# === Atualização automática a cada 2 minutos ===
 st_autorefresh(interval=120 * 1000, key="auto_refresh")
 
 # === Função para formatar data ===
@@ -72,8 +73,10 @@ def carregar_transacoes():
 st.set_page_config(page_title="Painel de Transações", layout="wide")
 st.title("📊 Painel de Transações Amplo - API em Tempo Real")
 
-# === Timestamp de atualização ===
-st.sidebar.markdown(f"⏰ Última atualização: `{datetime.now().strftime('%H:%M:%S')}`")
+# === Timestamp de atualização com fuso de Brasília ===
+br_tz = timezone("America/Sao_Paulo")
+hora_atual = datetime.now(br_tz).strftime('%H:%M:%S')
+st.sidebar.markdown(f"⏰ Última atualização: `{hora_atual}`")
 
 # === Carregar dados ===
 df = carregar_transacoes()
