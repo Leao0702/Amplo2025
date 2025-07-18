@@ -3,3 +3,5 @@ pandas
 requests
 streamlit-autorefresh
 pytz
+gspread
+oauth2client
