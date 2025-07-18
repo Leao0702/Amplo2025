@@ -217,3 +217,5 @@ for gerente, grupo in df.groupby("Manager Name"):
             st.error(f"❌ Erro ao enviar dados para '{gerente_nome}': {e}")
     else:
         st.warning(f"⚠️ Nenhuma linha válida para enviar para '{gerente_nome}'.")
+        )
+        
