@@ -156,7 +156,7 @@ mapeamento = {
     linha[0]: linha[1] for linha in mapeamento_raw if len(linha) >= 2 and linha[0] and linha[1]
 }
 
-for gerente, grupo in df_filtrado.groupby("Manager Name"):
+for gerente, grupo in df.groupby("Manager Name"):
     if gerente not in mapeamento:
         st.warning(f"❗ Gerente '{gerente}' não encontrado na planilha de mapeamento.")
         continue
