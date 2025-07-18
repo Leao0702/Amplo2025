@@ -140,7 +140,6 @@ st.download_button(
     data=df_filtrado.to_csv(index=False).encode("utf-8"),
     file_name="transacoes_filtradas.csv",
     mime="text/csv"
-)
 
 # === Enviar dados para planilhas dos gerentes ===
 creds = json.loads(st.secrets["GOOGLE_CREDENTIALS"])
