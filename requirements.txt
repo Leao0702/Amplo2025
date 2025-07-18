@@ -5,3 +5,4 @@ streamlit-autorefresh
 pytz
 gspread
 oauth2client
+google-auth
