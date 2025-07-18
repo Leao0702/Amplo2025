@@ -139,7 +139,7 @@ st.download_button(
     label="⬇️ Baixar dados filtrados (CSV)",
     data=df_filtrado.to_csv(index=False).encode("utf-8"),
     file_name="transacoes_filtradas.csv",
-    mime="text/csv"
+    mime="text/csv")
 
 # === Enviar dados para planilhas dos gerentes ===
 creds = json.loads(st.secrets["GOOGLE_CREDENTIALS"])
@@ -217,5 +217,5 @@ for gerente, grupo in df.groupby("Manager Name"):
             st.error(f"❌ Erro ao enviar dados para '{gerente_nome}': {e}")
     else:
         st.warning(f"⚠️ Nenhuma linha válida para enviar para '{gerente_nome}'.")
-        )
+        
         
