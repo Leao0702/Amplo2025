@@ -3,7 +3,10 @@ import pandas as pd
 import requests
 from datetime import datetime, date
 from streamlit_autorefresh import st_autorefresh
-from pytz import timezone  # <-- Adicionado para corrigir o fuso
+from pytz import timezone
+import gspread
+from google.oauth2.service_account import Credentials
+import json
 
 # === Atualização automática a cada 2 minutos ===
 st_autorefresh(interval=120 * 1000, key="auto_refresh")
@@ -138,3 +141,49 @@ st.download_button(
     file_name="transacoes_filtradas.csv",
     mime="text/csv"
 )
+
+# === Enviar dados para planilhas dos gerentes ===
+creds = json.loads(st.secrets["GOOGLE_CREDENTIALS"])
+gc = gspread.authorize(Credentials.from_service_account_info(creds))
+
+planilha_mapeamento = gc.open_by_url(
+    "https://docs.google.com/spreadsheets/d/1ml33FVYisBfge4W9sONi7qwMMq2QLLuWF0CHsBrGGj0/edit#gid=0"
+)
+aba_mapeamento = planilha_mapeamento.sheet1
+mapeamento_raw = aba_mapeamento.get_all_values()[3:]
+
+mapeamento = {
+    linha[0]: linha[1] for linha in mapeamento_raw if len(linha) >= 2 and linha[0] and linha[1]
+}
+
+for gerente, grupo in df_filtrado.groupby("Manager Name"):
+    if gerente not in mapeamento:
+        st.warning(f"❗ Gerente '{gerente}' não encontrado na planilha de mapeamento.")
+        continue
+
+    try:
+        planilha_id = mapeamento[gerente]
+        planilha_gerente = gc.open_by_key(planilha_id)
+
+        nome_mes = datetime.now().strftime("%B").capitalize()
+        try:
+            aba_mes = planilha_gerente.worksheet(nome_mes)
+        except gspread.exceptions.WorksheetNotFound:
+            st.warning(f"❗ Aba '{nome_mes}' não encontrada na planilha de {gerente}.")
+            continue
+
+        linhas = []
+        for _, row in grupo.iterrows():
+            nova_linha = [""] * 13
+            nova_linha[0] = row["UTM Source"]
+            nova_linha[1] = row["Product Name"]
+            nova_linha[12] = row["Created At"]
+            nova_linha.append(str(row["Amount"]).replace(".", ","))
+            linhas.append(nova_linha)
+
+        aba_mes.append_rows(linhas, value_input_option="USER_ENTERED")
+        st.success(f"✅ Dados enviados para a planilha de {gerente}.")
+    except Exception as e:
+        st.error(f"Erro ao inserir na planilha do gerente '{gerente}': {e}")
+
+
