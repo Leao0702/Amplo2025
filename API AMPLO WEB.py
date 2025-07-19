@@ -145,8 +145,11 @@ st.download_button(
 
 # === Enviar TODAS as transações para uma planilha geral ===
 try:
-    creds = json.loads(st.secrets["GOOGLE_CREDENTIALS"])
-    gc = gspread.authorize(Credentials.from_service_account_info(creds))
+    creds_dict = json.loads(st.secrets["GOOGLE_CREDENTIALS"])
+scopes = ["https://www.googleapis.com/auth/spreadsheets"]
+creds = Credentials.from_service_account_info(creds_dict, scopes=scopes)
+gc = gspread.authorize(creds)
+
 
     planilha_geral = gc.open_by_url("https://docs.google.com/spreadsheets/d/1PqWsh2MEET7AG2oN71HxmAb9AqutkBHpnitP1jTMvT0/edit?gid=0#gid=0")
     aba = planilha_geral.sheet1
