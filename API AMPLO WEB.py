@@ -143,81 +143,28 @@ st.download_button(
 
 )
 
-# === Enviar dados para planilhas dos gerentes ===
-creds = json.loads(st.secrets["GOOGLE_CREDENTIALS"])
-gc = gspread.authorize(Credentials.from_service_account_info(creds))
-
+# === Enviar TODAS as transações para uma planilha geral ===
 try:
-    planilha_mapeamento = gc.open_by_url(
-        "https://docs.google.com/spreadsheets/d/1ml33FVYisBfge4W9sONi7qwMMq2QLLuWF0CHsBrGGj0/edit#gid=0"
-    )
-    aba_mapeamento = planilha_mapeamento.sheet1
-    mapeamento_raw = aba_mapeamento.get_all_values()[3:]  # A partir da linha 4
-except Exception as e:
-    st.error(f"❌ Erro ao abrir a planilha de mapeamento: {e}")
-    st.stop()
+    creds = json.loads(st.secrets["GOOGLE_CREDENTIALS"])
+    gc = gspread.authorize(Credentials.from_service_account_info(creds))
 
-mapeamento = {
-    linha[0].strip(): linha[1].strip()
-    for linha in mapeamento_raw
-    if len(linha) >= 2 and linha[0].strip() and linha[1].strip()
-}
+    planilha_geral = gc.open_by_url("https://docs.google.com/spreadsheets/d/1PqWsh2MEET7AG2oN71HxmAb9AqutkBHpnitP1jTMvT0/edit?gid=0#gid=0")
+    aba = planilha_geral.sheet1
 
-# === DEBUG opcional ===
-st.sidebar.write("👥 Gerentes encontrados na planilha:")
-st.sidebar.write(list(mapeamento.keys()))
+    # Limpa todos os dados antigos da planilha
+    aba.clear()
 
-for gerente, grupo in df.groupby("Manager Name"):
-    gerente_nome = gerente.strip()
+    # Define os cabeçalhos conforme o DataFrame
+    cabecalhos = df.columns.tolist()
+    aba.append_row(cabecalhos)
 
-    if gerente_nome not in mapeamento:
-        st.warning(f"⚠️ Gerente '{gerente_nome}' não está na planilha de mapeamento.")
-        continue
+    # Converte o DataFrame para lista de listas (linhas)
+    dados = df.values.tolist()
 
-    planilha_id = mapeamento[gerente_nome]
-
-    try:
-        planilha_gerente = gc.open_by_key(planilha_id)
-    except Exception as e:
-        st.error(f"❌ Não foi possível abrir a planilha do gerente '{gerente_nome}': {e}")
-        continue
-
-    nome_mes = datetime.now().strftime("%B").capitalize()
-
-    try:
-        aba_mes = planilha_gerente.worksheet(nome_mes)
-    except gspread.exceptions.WorksheetNotFound:
-        st.error(f"❌ Aba '{nome_mes}' não existe na planilha de {gerente_nome}.")
-        continue
-
-    linhas = []
-    for idx, row in grupo.iterrows():
-        try:
-            utm = row.get("UTM Source", "").strip()
-            produto = row.get("Product Name", "").strip()
-            data = row.get("Created At", "").strip()
-            valor = str(row.get("Amount", "")).replace(".", ",")
-
-            if not utm or not produto or not data or not valor:
-                st.warning(f"⚠️ Linha ignorada por campos vazios para '{gerente_nome}': {row.to_dict()}")
-                continue
-
-            nova_linha = [""] * 13
-            nova_linha[0] = utm
-            nova_linha[1] = produto
-            nova_linha[12] = data
-            nova_linha.append(valor)
-            linhas.append(nova_linha)
-        except Exception as e:
-            st.error(f"❌ Erro ao processar linha: {e}")
-
-    if linhas:
-        try:
-            aba_mes.append_rows(linhas, value_input_option="USER_ENTERED")
-            st.success(f"✅ {len(linhas)} linhas enviadas para a planilha de '{gerente_nome}'.")
-        except Exception as e:
-            st.error(f"❌ Erro ao enviar dados para '{gerente_nome}': {e}")
+    if dados:
+        aba.append_rows(dados, value_input_option="USER_ENTERED")
+        st.success(f"✅ {len(dados)} transações enviadas para a planilha geral.")
     else:
-        st.warning(f"⚠️ Nenhuma linha válida para enviar para '{gerente_nome}'.")
-        
-        
+        st.warning("⚠️ Nenhuma transação para enviar.")
+except Exception as e:
+    st.error(f"❌ Erro ao enviar dados para a planilha geral: {e}")
