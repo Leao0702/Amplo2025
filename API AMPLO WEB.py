@@ -145,10 +145,11 @@ st.download_button(
 
 # === Enviar TODAS as transações para uma planilha geral ===
 try:
-creds_dict = json.loads(st.secrets["GOOGLE_CREDENTIALS"])
-scopes = ["https://www.googleapis.com/auth/spreadsheets"]
-creds = Credentials.from_service_account_info(creds_dict, scopes=scopes)
-gc = gspread.authorize(creds)
+    creds_dict = json.loads(st.secrets["GOOGLE_CREDENTIALS"])
+    scopes = ["https://www.googleapis.com/auth/spreadsheets"]
+    creds = Credentials.from_service_account_info(creds_dict, scopes=scopes)
+    gc = gspread.authorize(creds)
+
 
 
 
