@@ -90,39 +90,9 @@ if df.empty:
 # === Filtros ===
 # === Filtros ===
 st.sidebar.header("🔎 Filtros")
-
-# === STATUS ===
-todos_status = df["Status"].dropna().unique().tolist()
-status_opcoes = ["👉 SELECIONAR TODOS"] + todos_status
-status_selecionado = st.sidebar.multiselect(
-    "Status",
-    options=status_opcoes,
-    default=["👉 SELECIONAR TODOS"],
-)
-status = todos_status if "👉 SELECIONAR TODOS" in status_selecionado else status_selecionado
-
-# === GERENTES ===
-todos_gerentes = df["Manager Name"].dropna().unique().tolist()
-gerente_opcoes = ["👉 SELECIONAR TODOS"] + todos_gerentes
-gerente_selecionado = st.sidebar.multiselect(
-    "Gerente",
-    options=gerente_opcoes,
-    default=["👉 SELECIONAR TODOS"],
-)
-gerentes = todos_gerentes if "👉 SELECIONAR TODOS" in gerente_selecionado else gerente_selecionado
-
-# === PRODUTOS ===
-todos_produtos = df["Product Name"].dropna().unique().tolist()
-produto_opcoes = ["👉 SELECIONAR TODOS"] + todos_produtos
-produto_selecionado = st.sidebar.multiselect(
-    "Produto",
-    options=produto_opcoes,
-    default=["👉 SELECIONAR TODOS"],
-)
-produtos = todos_produtos if "👉 SELECIONAR TODOS" in produto_selecionado else produto_selecionado
-
-
-
+status = st.sidebar.multiselect("Status", options=df["Status"].dropna().unique(), default=df["Status"].dropna().unique())
+gerentes = st.sidebar.multiselect("Gerente", options=df["Manager Name"].unique(), default=df["Manager Name"].unique())
+produtos = st.sidebar.multiselect("Produto", options=df["Product Name"].unique(), default=df["Product Name"].unique())
 
 # === Range padrão do mês atual ===
 hoje = date.today()
