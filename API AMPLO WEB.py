@@ -123,16 +123,33 @@ st.subheader(f"📋 {len(df_filtrado)} transações encontradas")
 st.dataframe(df_filtrado, use_container_width=True)
 
 # === KPIs
+# === KPIs lado a lado
 total = df_filtrado["Amount"].sum()
-st.metric("💰 Total movimentado", f"R$ {total:,.2f}".replace(",", "X").replace(".", ",").replace("X", "."))
+count_paid = df_filtrado[df_filtrado["Status"] == "paid"].shape[0]
+count_pending = df_filtrado[df_filtrado["Status"] == "pending"].shape[0]
+total_considerado = count_paid + count_pending
 
-col1, col2 = st.columns(2)
+if total_considerado > 0:
+    percentual_conversao = (count_paid / total_considerado) * 100
+else:
+    percentual_conversao = 0
+
+# Exibir métricas lado a lado
+col1, col2, col3, col4 = st.columns([1, 1, 1, 1])
+
 with col1:
-    count_paid = df_filtrado[df_filtrado["Status"] == "paid"].shape[0]
-    st.metric("🟢 Transações pagas", f"{count_paid} transações")
+    st.metric("💰 Total movimentado", f"R$ {total:,.2f}".replace(",", "X").replace(".", ",").replace("X", "."))
+
 with col2:
-    count_pending = df_filtrado[df_filtrado["Status"] == "pending"].shape[0]
-    st.metric("🟡 Transações pendentes", f"{count_pending} transações")
+    st.markdown("<span style='color: green;'>🟢 Transações pagas</span>", unsafe_allow_html=True)
+    st.subheader(f"{count_paid} transações")
+
+with col3:
+    st.markdown("<span style='color: goldenrod;'>🟡 Transações pendentes</span>", unsafe_allow_html=True)
+    st.subheader(f"{count_pending} transações")
+
+with col4:
+    st.metric("📈 % de conversão em vendas", f"{percentual_conversao:.2f}%")
 
 # === Exportar CSV ===
 st.download_button(
