@@ -93,36 +93,34 @@ st.sidebar.header("🔎 Filtros")
 
 # === STATUS ===
 todos_status = df["Status"].dropna().unique().tolist()
-status_options = ["✅ SELECIONAR TODOS"] + todos_status
-status_selecionados = st.sidebar.multiselect(
+status_opcoes = ["👉 SELECIONAR TODOS"] + todos_status
+status_selecionado = st.sidebar.multiselect(
     "Status",
-    options=status_options,
-    default=["✅ SELECIONAR TODOS"],
-    format_func=lambda x: f"👉 {x}" if x == "✅ SELECIONAR TODOS" else x
+    options=status_opcoes,
+    default=["👉 SELECIONAR TODOS"],
 )
-status = todos_status if "✅ SELECIONAR TODOS" in status_selecionados else status_selecionados
+status = todos_status if "👉 SELECIONAR TODOS" in status_selecionado else status_selecionado
 
-# === GERENTE ===
+# === GERENTES ===
 todos_gerentes = df["Manager Name"].dropna().unique().tolist()
-gerente_options = ["✅ SELECIONAR TODOS"] + todos_gerentes
-gerente_selecionados = st.sidebar.multiselect(
+gerente_opcoes = ["👉 SELECIONAR TODOS"] + todos_gerentes
+gerente_selecionado = st.sidebar.multiselect(
     "Gerente",
-    options=gerente_options,
-    default=["✅ SELECIONAR TODOS"],
-    format_func=lambda x: f"👉 {x}" if x == "✅ SELECIONAR TODOS" else x
+    options=gerente_opcoes,
+    default=["👉 SELECIONAR TODOS"],
 )
-gerentes = todos_gerentes if "✅ SELECIONAR TODOS" in gerente_selecionados else gerente_selecionados
+gerentes = todos_gerentes if "👉 SELECIONAR TODOS" in gerente_selecionado else gerente_selecionado
 
-# === PRODUTO ===
+# === PRODUTOS ===
 todos_produtos = df["Product Name"].dropna().unique().tolist()
-produto_options = ["✅ SELECIONAR TODOS"] + todos_produtos
-produto_selecionados = st.sidebar.multiselect(
+produto_opcoes = ["👉 SELECIONAR TODOS"] + todos_produtos
+produto_selecionado = st.sidebar.multiselect(
     "Produto",
-    options=produto_options,
-    default=["✅ SELECIONAR TODOS"],
-    format_func=lambda x: f"👉 {x}" if x == "✅ SELECIONAR TODOS" else x
+    options=produto_opcoes,
+    default=["👉 SELECIONAR TODOS"],
 )
-produtos = todos_produtos if "✅ SELECIONAR TODOS" in produto_selecionados else produto_selecionados
+produtos = todos_produtos if "👉 SELECIONAR TODOS" in produto_selecionado else produto_selecionado
+
 
 
 
