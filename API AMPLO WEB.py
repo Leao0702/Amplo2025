@@ -88,10 +88,35 @@ if df.empty:
     st.stop()
 
 # === Filtros ===
+# === Filtros ===
 st.sidebar.header("🔎 Filtros")
-status = st.sidebar.multiselect("Status", options=df["Status"].dropna().unique(), default=df["Status"].dropna().unique())
-gerentes = st.sidebar.multiselect("Gerente", options=df["Manager Name"].unique(), default=df["Manager Name"].unique())
-produtos = st.sidebar.multiselect("Produto", options=df["Product Name"].unique(), default=df["Product Name"].unique())
+
+# === STATUS ===
+todos_status = df["Status"].dropna().unique().tolist()
+selecionar_todos_status = st.sidebar.checkbox("Selecionar todos os Status", value=True)
+status = st.sidebar.multiselect(
+    "Status",
+    options=todos_status,
+    default=todos_status if selecionar_todos_status else []
+)
+
+# === GERENTES ===
+todos_gerentes = df["Manager Name"].dropna().unique().tolist()
+selecionar_todos_gerentes = st.sidebar.checkbox("Selecionar todos os Gerentes", value=True)
+gerentes = st.sidebar.multiselect(
+    "Gerente",
+    options=todos_gerentes,
+    default=todos_gerentes if selecionar_todos_gerentes else []
+)
+
+# === PRODUTOS ===
+todos_produtos = df["Product Name"].dropna().unique().tolist()
+selecionar_todos_produtos = st.sidebar.checkbox("Selecionar todos os Produtos", value=True)
+produtos = st.sidebar.multiselect(
+    "Produto",
+    options=todos_produtos,
+    default=todos_produtos if selecionar_todos_produtos else []
+)
 
 # === Range padrão do mês atual ===
 hoje = date.today()
@@ -117,6 +142,7 @@ if isinstance(data_range, (list, tuple)) and len(data_range) == 2:
 else:
     st.warning("Por favor, selecione um intervalo de datas válido.")
     df_filtrado = df[0:0]
+
 
 # === Mostrar dados ===
 st.subheader(f"📋 {len(df_filtrado)} transações encontradas")
