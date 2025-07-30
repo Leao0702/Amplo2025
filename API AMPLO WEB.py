@@ -90,23 +90,23 @@ if df.empty:
 # === Filtros ===
 st.sidebar.header("🔎 Filtros")
 
-# Filtro STATUS com "Selecionar todos"
+# === STATUS ===
 todos_status = df["Status"].dropna().unique().tolist()
 status_opcoes = ["👉 SELECIONAR TODOS"] + todos_status
 status_selecionado = st.sidebar.multiselect("Status", options=status_opcoes, default=["👉 SELECIONAR TODOS"])
 status = todos_status if "👉 SELECIONAR TODOS" in status_selecionado else status_selecionado
 
-# Filtro GERENTE com "Selecionar todos"
+# === GERENTES ===
 todos_gerentes = df["Manager Name"].dropna().unique().tolist()
 gerente_opcoes = ["👉 SELECIONAR TODOS"] + todos_gerentes
-gerente_selecionado = st.sidebar.multiselect("Gerente", options=gerente_opcoes, default=["👉 SELECIONAR TODOS"])
-gerentes = todos_gerentes if "👉 SELECIONAR TODOS" in gerente_selecionado else gerente_selecionado
+gerentes_selecionado = st.sidebar.multiselect("Gerente", options=gerente_opcoes, default=["👉 SELECIONAR TODOS"])
+gerentes = todos_gerentes if "👉 SELECIONAR TODOS" in gerentes_selecionado else gerentes_selecionado
 
-# Filtro PRODUTO com "Selecionar todos"
+# === PRODUTOS ===
 todos_produtos = df["Product Name"].dropna().unique().tolist()
 produto_opcoes = ["👉 SELECIONAR TODOS"] + todos_produtos
-produto_selecionado = st.sidebar.multiselect("Produto", options=produto_opcoes, default=["👉 SELECIONAR TODOS"])
-produtos = todos_produtos if "👉 SELECIONAR TODOS" in produto_selecionado else produto_selecionado
+produtos_selecionado = st.sidebar.multiselect("Produto", options=produto_opcoes, default=["👉 SELECIONAR TODOS"])
+produtos = todos_produtos if "👉 SELECIONAR TODOS" in produtos_selecionado else produtos_selecionado
 
 # === Range padrão do mês atual ===
 hoje = date.today()
@@ -142,11 +142,7 @@ total = df_filtrado["Amount"].sum()
 count_paid = df_filtrado[df_filtrado["Status"] == "paid"].shape[0]
 count_pending = df_filtrado[df_filtrado["Status"] == "pending"].shape[0]
 total_considerado = count_paid + count_pending
-
-if total_considerado > 0:
-    percentual_conversao = (count_paid / total_considerado) * 100
-else:
-    percentual_conversao = 0
+percentual_conversao = (count_paid / total_considerado * 100) if total_considerado > 0 else 0
 
 col1, col2, col3, col4 = st.columns([1, 1, 1, 1])
 with col1:
@@ -175,14 +171,14 @@ try:
     creds = Credentials.from_service_account_info(creds_dict, scopes=scopes)
     gc = gspread.authorize(creds)
 
-    planilha_geral = gc.open_by_url("https://docs.google.com/spreadsheets/d/1PqWsh2MEET7AG2oN71HxmAb9AqutkBHpnitP1jTMvT0/edit")
+    planilha_geral = gc.open_by_url("https://docs.google.com/spreadsheets/d/1PqWsh2MEET7AG2oN71HxmAb9AqutkBHpnitP1jTMvT0/edit?gid=0")
     aba = planilha_geral.sheet1
 
     aba.clear()
     cabecalhos = df.columns.tolist()
     aba.append_row(cabecalhos)
-
     dados = df.values.tolist()
+
     if dados:
         aba.append_rows(dados, value_input_option="USER_ENTERED")
         st.success(f"✅ {len(dados)} transações enviadas para a planilha geral.")
@@ -190,3 +186,4 @@ try:
         st.warning("⚠️ Nenhuma transação para enviar.")
 except Exception as e:
     st.error(f"❌ Erro ao enviar dados para a planilha geral: {e}")
+
