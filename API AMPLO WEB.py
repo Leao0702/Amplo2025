@@ -88,11 +88,25 @@ if df.empty:
     st.stop()
 
 # === Filtros ===
-# === Filtros ===
 st.sidebar.header("🔎 Filtros")
-status = st.sidebar.multiselect("Status", options=df["Status"].dropna().unique(), default=df["Status"].dropna().unique())
-gerentes = st.sidebar.multiselect("Gerente", options=df["Manager Name"].unique(), default=df["Manager Name"].unique())
-produtos = st.sidebar.multiselect("Produto", options=df["Product Name"].unique(), default=df["Product Name"].unique())
+
+# Filtro STATUS com "Selecionar todos"
+todos_status = df["Status"].dropna().unique().tolist()
+status_opcoes = ["👉 SELECIONAR TODOS"] + todos_status
+status_selecionado = st.sidebar.multiselect("Status", options=status_opcoes, default=["👉 SELECIONAR TODOS"])
+status = todos_status if "👉 SELECIONAR TODOS" in status_selecionado else status_selecionado
+
+# Filtro GERENTE com "Selecionar todos"
+todos_gerentes = df["Manager Name"].dropna().unique().tolist()
+gerente_opcoes = ["👉 SELECIONAR TODOS"] + todos_gerentes
+gerente_selecionado = st.sidebar.multiselect("Gerente", options=gerente_opcoes, default=["👉 SELECIONAR TODOS"])
+gerentes = todos_gerentes if "👉 SELECIONAR TODOS" in gerente_selecionado else gerente_selecionado
+
+# Filtro PRODUTO com "Selecionar todos"
+todos_produtos = df["Product Name"].dropna().unique().tolist()
+produto_opcoes = ["👉 SELECIONAR TODOS"] + todos_produtos
+produto_selecionado = st.sidebar.multiselect("Produto", options=produto_opcoes, default=["👉 SELECIONAR TODOS"])
+produtos = todos_produtos if "👉 SELECIONAR TODOS" in produto_selecionado else produto_selecionado
 
 # === Range padrão do mês atual ===
 hoje = date.today()
@@ -119,13 +133,11 @@ else:
     st.warning("Por favor, selecione um intervalo de datas válido.")
     df_filtrado = df[0:0]
 
-
 # === Mostrar dados ===
 st.subheader(f"📋 {len(df_filtrado)} transações encontradas")
 st.dataframe(df_filtrado, use_container_width=True)
 
-# === KPIs
-# === KPIs lado a lado
+# === KPIs ===
 total = df_filtrado["Amount"].sum()
 count_paid = df_filtrado[df_filtrado["Status"] == "paid"].shape[0]
 count_pending = df_filtrado[df_filtrado["Status"] == "pending"].shape[0]
@@ -136,20 +148,15 @@ if total_considerado > 0:
 else:
     percentual_conversao = 0
 
-# Exibir métricas lado a lado
 col1, col2, col3, col4 = st.columns([1, 1, 1, 1])
-
 with col1:
     st.metric("💰 Total movimentado", f"R$ {total:,.2f}".replace(",", "X").replace(".", ",").replace("X", "."))
-
 with col2:
     st.markdown("<span style='color: green;'>🟢 Transações pagas</span>", unsafe_allow_html=True)
     st.subheader(f"{count_paid} transações")
-
 with col3:
     st.markdown("<span style='color: goldenrod;'>🟡 Transações pendentes</span>", unsafe_allow_html=True)
     st.subheader(f"{count_pending} transações")
-
 with col4:
     st.metric("📈 % de conversão em vendas", f"{percentual_conversao:.2f}%")
 
@@ -159,7 +166,6 @@ st.download_button(
     data=df_filtrado.to_csv(index=False).encode("utf-8"),
     file_name="transacoes_filtradas.csv",
     mime="text/csv"
-
 )
 
 # === Enviar TODAS as transações para uma planilha geral ===
@@ -169,22 +175,14 @@ try:
     creds = Credentials.from_service_account_info(creds_dict, scopes=scopes)
     gc = gspread.authorize(creds)
 
-
-
-
-    planilha_geral = gc.open_by_url("https://docs.google.com/spreadsheets/d/1PqWsh2MEET7AG2oN71HxmAb9AqutkBHpnitP1jTMvT0/edit?gid=0#gid=0")
+    planilha_geral = gc.open_by_url("https://docs.google.com/spreadsheets/d/1PqWsh2MEET7AG2oN71HxmAb9AqutkBHpnitP1jTMvT0/edit")
     aba = planilha_geral.sheet1
 
-    # Limpa todos os dados antigos da planilha
     aba.clear()
-
-    # Define os cabeçalhos conforme o DataFrame
     cabecalhos = df.columns.tolist()
     aba.append_row(cabecalhos)
 
-    # Converte o DataFrame para lista de listas (linhas)
     dados = df.values.tolist()
-
     if dados:
         aba.append_rows(dados, value_input_option="USER_ENTERED")
         st.success(f"✅ {len(dados)} transações enviadas para a planilha geral.")
