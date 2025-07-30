@@ -18,6 +18,18 @@ def formatar_data(data_iso):
     except Exception:
         return None
 
+# === Função de multiselect com opção 'Selecionar todos' ===
+def multiselect_com_todos(label, opcoes):
+    destaque = "👉 SELECIONAR TODOS"
+    opcoes_modificadas = [destaque] + list(opcoes)
+    selecao = st.sidebar.multiselect(
+        label,
+        options=opcoes_modificadas,
+        default=[destaque],
+        format_func=lambda x: f"✅ {x}" if x == destaque else x
+    )
+    return list(opcoes) if destaque in selecao else selecao
+
 # === Carregar transações da API (sem cache) ===
 def carregar_transacoes():
     with st.spinner("🔄 Carregando transações da API..."):
@@ -90,23 +102,9 @@ if df.empty:
 # === Filtros ===
 st.sidebar.header("🔎 Filtros")
 
-# === STATUS ===
-todos_status = df["Status"].dropna().unique().tolist()
-status_opcoes = ["👉 SELECIONAR TODOS"] + todos_status
-status_selecionado = st.sidebar.multiselect("Status", options=status_opcoes, default=["👉 SELECIONAR TODOS"])
-status = todos_status if "👉 SELECIONAR TODOS" in status_selecionado else status_selecionado
-
-# === GERENTES ===
-todos_gerentes = df["Manager Name"].dropna().unique().tolist()
-gerente_opcoes = ["👉 SELECIONAR TODOS"] + todos_gerentes
-gerentes_selecionado = st.sidebar.multiselect("Gerente", options=gerente_opcoes, default=["👉 SELECIONAR TODOS"])
-gerentes = todos_gerentes if "👉 SELECIONAR TODOS" in gerentes_selecionado else gerentes_selecionado
-
-# === PRODUTOS ===
-todos_produtos = df["Product Name"].dropna().unique().tolist()
-produto_opcoes = ["👉 SELECIONAR TODOS"] + todos_produtos
-produtos_selecionado = st.sidebar.multiselect("Produto", options=produto_opcoes, default=["👉 SELECIONAR TODOS"])
-produtos = todos_produtos if "👉 SELECIONAR TODOS" in produtos_selecionado else produtos_selecionado
+status = multiselect_com_todos("Status", df["Status"].dropna().unique())
+gerentes = multiselect_com_todos("Gerente", df["Manager Name"].dropna().unique())
+produtos = multiselect_com_todos("Produto", df["Product Name"].dropna().unique())
 
 # === Range padrão do mês atual ===
 hoje = date.today()
@@ -186,4 +184,3 @@ try:
         st.warning("⚠️ Nenhuma transação para enviar.")
 except Exception as e:
     st.error(f"❌ Erro ao enviar dados para a planilha geral: {e}")
-
