@@ -93,30 +93,22 @@ st.sidebar.header("🔎 Filtros")
 
 # === STATUS ===
 todos_status = df["Status"].dropna().unique().tolist()
-selecionar_todos_status = st.sidebar.checkbox("Selecionar todos os Status", value=True)
-status = st.sidebar.multiselect(
-    "Status",
-    options=todos_status,
-    default=todos_status if selecionar_todos_status else []
-)
+opcoes_status = ["Selecionar todos"] + todos_status
+status_selecionado = st.sidebar.multiselect("Status", options=opcoes_status, default=["Selecionar todos"])
+status = todos_status if "Selecionar todos" in status_selecionado else status_selecionado
 
-# === GERENTES ===
+# === GERENTE ===
 todos_gerentes = df["Manager Name"].dropna().unique().tolist()
-selecionar_todos_gerentes = st.sidebar.checkbox("Selecionar todos os Gerentes", value=True)
-gerentes = st.sidebar.multiselect(
-    "Gerente",
-    options=todos_gerentes,
-    default=todos_gerentes if selecionar_todos_gerentes else []
-)
+opcoes_gerentes = ["Selecionar todos"] + todos_gerentes
+gerente_selecionado = st.sidebar.multiselect("Gerente", options=opcoes_gerentes, default=["Selecionar todos"])
+gerentes = todos_gerentes if "Selecionar todos" in gerente_selecionado else gerente_selecionado
 
-# === PRODUTOS ===
+# === PRODUTO ===
 todos_produtos = df["Product Name"].dropna().unique().tolist()
-selecionar_todos_produtos = st.sidebar.checkbox("Selecionar todos os Produtos", value=True)
-produtos = st.sidebar.multiselect(
-    "Produto",
-    options=todos_produtos,
-    default=todos_produtos if selecionar_todos_produtos else []
-)
+opcoes_produtos = ["Selecionar todos"] + todos_produtos
+produto_selecionado = st.sidebar.multiselect("Produto", options=opcoes_produtos, default=["Selecionar todos"])
+produtos = todos_produtos if "Selecionar todos" in produto_selecionado else produto_selecionado
+
 
 # === Range padrão do mês atual ===
 hoje = date.today()
