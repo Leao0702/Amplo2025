@@ -18,6 +18,18 @@ def formatar_data(data_iso):
     except Exception:
         return None
 
+# === Função de multiselect com opção 'Selecionar todos' ===
+def multiselect_com_todos(label, opcoes):
+    destaque = "👉 SELECIONAR TODOS"
+    opcoes_modificadas = [destaque] + list(opcoes)
+    selecao = st.sidebar.multiselect(
+        label,
+        options=opcoes_modificadas,
+        default=[destaque],
+        format_func=lambda x: f"✅ {x}" if x == destaque else x
+    )
+    return list(opcoes) if destaque in selecao else selecao
+
 # === Carregar transações da API (sem cache) ===
 def carregar_transacoes():
     with st.spinner("🔄 Carregando transações da API..."):
@@ -90,24 +102,9 @@ if df.empty:
 # === Filtros ===
 st.sidebar.header("🔎 Filtros")
 
-def opcoes_com_selecionar_todos(lista):
-    lista_ordenada = sorted(list(set(lista)))
-    return ["Selecionar todos"] + lista_ordenada
-
-# Status
-status_opcoes = opcoes_com_selecionar_todos(df["Status"].dropna())
-status_selecionado = st.sidebar.multiselect("Status", options=status_opcoes, default=["Selecionar todos"])
-status_filtrado = df["Status"].dropna().unique() if "Selecionar todos" in status_selecionado else status_selecionado
-
-# Gerente
-gerente_opcoes = opcoes_com_selecionar_todos(df["Manager Name"])
-gerente_selecionado = st.sidebar.multiselect("Gerente", options=gerente_opcoes, default=["Selecionar todos"])
-gerente_filtrado = df["Manager Name"].unique() if "Selecionar todos" in gerente_selecionado else gerente_selecionado
-
-# Produto
-produto_opcoes = opcoes_com_selecionar_todos(df["Product Name"])
-produto_selecionado = st.sidebar.multiselect("Produto", options=produto_opcoes, default=["Selecionar todos"])
-produto_filtrado = df["Product Name"].unique() if "Selecionar todos" in produto_selecionado else produto_selecionado
+status = multiselect_com_todos("Status", df["Status"].dropna().unique())
+gerentes = multiselect_com_todos("Gerente", df["Manager Name"].dropna().unique())
+produtos = multiselect_com_todos("Produto", df["Product Name"].dropna().unique())
 
 # === Range padrão do mês atual ===
 hoje = date.today()
@@ -125,9 +122,9 @@ if isinstance(data_range, (list, tuple)) and len(data_range) == 2:
     data_inicio = pd.to_datetime(data_range[0]).strftime("%d/%m/%Y")
     data_fim = pd.to_datetime(data_range[1]).strftime("%d/%m/%Y")
     df_filtrado = df[
-        df["Status"].isin(status_filtrado) &
-        df["Manager Name"].isin(gerente_filtrado) &
-        df["Product Name"].isin(produto_filtrado) &
+        df["Status"].isin(status) &
+        df["Manager Name"].isin(gerentes) &
+        df["Product Name"].isin(produtos) &
         df["Created At"].between(data_inicio, data_fim)
     ]
 else:
@@ -135,20 +132,27 @@ else:
     df_filtrado = df[0:0]
 
 # === Mostrar dados ===
-st.subheader(f"📋 {len(df)} transações encontradas")
+st.subheader(f"📋 {len(df_filtrado)} transações encontradas")
 st.dataframe(df_filtrado, use_container_width=True)
 
 # === KPIs ===
 total = df_filtrado["Amount"].sum()
-st.metric("💰 Total movimentado", f"R$ {total:,.2f}".replace(",", "X").replace(".", ",").replace("X", "."))
+count_paid = df_filtrado[df_filtrado["Status"] == "paid"].shape[0]
+count_pending = df_filtrado[df_filtrado["Status"] == "pending"].shape[0]
+total_considerado = count_paid + count_pending
+percentual_conversao = (count_paid / total_considerado * 100) if total_considerado > 0 else 0
 
-col1, col2 = st.columns(2)
+col1, col2, col3, col4 = st.columns([1, 1, 1, 1])
 with col1:
-    count_paid = df_filtrado[df_filtrado["Status"] == "paid"].shape[0]
-    st.metric("🟢 Transações pagas", f"{count_paid} transações")
+    st.metric("💰 Total movimentado", f"R$ {total:,.2f}".replace(",", "X").replace(".", ",").replace("X", "."))
 with col2:
-    count_pending = df_filtrado[df_filtrado["Status"] == "pending"].shape[0]
-    st.metric("🟡 Transações pendentes", f"{count_pending} transações")
+    st.markdown("<span style='color: green;'>🟢 Transações pagas</span>", unsafe_allow_html=True)
+    st.subheader(f"{count_paid} transações")
+with col3:
+    st.markdown("<span style='color: goldenrod;'>🟡 Transações pendentes</span>", unsafe_allow_html=True)
+    st.subheader(f"{count_pending} transações")
+with col4:
+    st.metric("📈 % de conversão em vendas", f"{percentual_conversao:.2f}%")
 
 # === Exportar CSV ===
 st.download_button(
@@ -180,4 +184,3 @@ try:
         st.warning("⚠️ Nenhuma transação para enviar.")
 except Exception as e:
     st.error(f"❌ Erro ao enviar dados para a planilha geral: {e}")
-
