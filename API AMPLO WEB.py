@@ -3,10 +3,7 @@ import pandas as pd
 import requests
 from datetime import datetime, date
 from streamlit_autorefresh import st_autorefresh
-from pytz import timezone
-import gspread
-from google.oauth2.service_account import Credentials
-import json
+from pytz import timezone  # <-- Adicionado para corrigir o fuso
 
 # === Atualização automática a cada 2 minutos ===
 st_autorefresh(interval=120 * 1000, key="auto_refresh")
@@ -17,18 +14,6 @@ def formatar_data(data_iso):
         return datetime.fromisoformat(data_iso.replace("Z", "+00:00"))
     except Exception:
         return None
-
-# === Função de multiselect com opção 'Selecionar todos' ===
-def multiselect_com_todos(label, opcoes):
-    destaque = "👉 SELECIONAR TODOS"
-    opcoes_modificadas = [destaque] + list(opcoes)
-    selecao = st.sidebar.multiselect(
-        label,
-        options=opcoes_modificadas,
-        default=[destaque],
-        format_func=lambda x: f"✅ {x}" if x == destaque else x
-    )
-    return list(opcoes) if destaque in selecao else selecao
 
 # === Carregar transações da API (sem cache) ===
 def carregar_transacoes():
@@ -101,10 +86,9 @@ if df.empty:
 
 # === Filtros ===
 st.sidebar.header("🔎 Filtros")
-
-status = multiselect_com_todos("Status", df["Status"].dropna().unique())
-gerentes = multiselect_com_todos("Gerente", df["Manager Name"].dropna().unique())
-produtos = multiselect_com_todos("Produto", df["Product Name"].dropna().unique())
+status = st.sidebar.multiselect("Status", options=df["Status"].dropna().unique(), default=df["Status"].dropna().unique())
+gerentes = st.sidebar.multiselect("Gerente", options=df["Manager Name"].unique(), default=df["Manager Name"].unique())
+produtos = st.sidebar.multiselect("Produto", options=df["Product Name"].unique(), default=df["Product Name"].unique())
 
 # === Range padrão do mês atual ===
 hoje = date.today()
@@ -135,24 +119,17 @@ else:
 st.subheader(f"📋 {len(df_filtrado)} transações encontradas")
 st.dataframe(df_filtrado, use_container_width=True)
 
-# === KPIs ===
+# === KPIs
 total = df_filtrado["Amount"].sum()
-count_paid = df_filtrado[df_filtrado["Status"] == "paid"].shape[0]
-count_pending = df_filtrado[df_filtrado["Status"] == "pending"].shape[0]
-total_considerado = count_paid + count_pending
-percentual_conversao = (count_paid / total_considerado * 100) if total_considerado > 0 else 0
+st.metric("💰 Total movimentado", f"R$ {total:,.2f}".replace(",", "X").replace(".", ",").replace("X", "."))
 
-col1, col2, col3, col4 = st.columns([1, 1, 1, 1])
+col1, col2 = st.columns(2)
 with col1:
-    st.metric("💰 Total movimentado", f"R$ {total:,.2f}".replace(",", "X").replace(".", ",").replace("X", "."))
+    count_paid = df_filtrado[df_filtrado["Status"] == "paid"].shape[0]
+    st.metric("🟢 Transações pagas", f"{count_paid} transações")
 with col2:
-    st.markdown("<span style='color: green;'>🟢 Transações pagas</span>", unsafe_allow_html=True)
-    st.subheader(f"{count_paid} transações")
-with col3:
-    st.markdown("<span style='color: goldenrod;'>🟡 Transações pendentes</span>", unsafe_allow_html=True)
-    st.subheader(f"{count_pending} transações")
-with col4:
-    st.metric("📈 % de conversão em vendas", f"{percentual_conversao:.2f}%")
+    count_pending = df_filtrado[df_filtrado["Status"] == "pending"].shape[0]
+    st.metric("🟡 Transações pendentes", f"{count_pending} transações")
 
 # === Exportar CSV ===
 st.download_button(
@@ -161,7 +138,6 @@ st.download_button(
     file_name="transacoes_filtradas.csv",
     mime="text/csv"
 )
-
 # === Enviar TODAS as transações para uma planilha geral ===
 try:
     creds_dict = json.loads(st.secrets["GOOGLE_CREDENTIALS"])
