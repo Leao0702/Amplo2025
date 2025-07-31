@@ -3,7 +3,10 @@ import pandas as pd
 import requests
 from datetime import datetime, date
 from streamlit_autorefresh import st_autorefresh
-from pytz import timezone  # <-- Adicionado para corrigir o fuso
+from pytz import timezone
+import gspread
+from google.oauth2.service_account import Credentials
+import json
 
 # === Atualização automática a cada 2 minutos ===
 st_autorefresh(interval=120 * 1000, key="auto_refresh")
@@ -86,9 +89,25 @@ if df.empty:
 
 # === Filtros ===
 st.sidebar.header("🔎 Filtros")
-status = st.sidebar.multiselect("Status", options=df["Status"].dropna().unique(), default=df["Status"].dropna().unique())
-gerentes = st.sidebar.multiselect("Gerente", options=df["Manager Name"].unique(), default=df["Manager Name"].unique())
-produtos = st.sidebar.multiselect("Produto", options=df["Product Name"].unique(), default=df["Product Name"].unique())
+
+def opcoes_com_selecionar_todos(lista):
+    lista_ordenada = sorted(list(set(lista)))
+    return ["Selecionar todos"] + lista_ordenada
+
+# Status
+status_opcoes = opcoes_com_selecionar_todos(df["Status"].dropna())
+status_selecionado = st.sidebar.multiselect("Status", options=status_opcoes, default=["Selecionar todos"])
+status_filtrado = df["Status"].dropna().unique() if "Selecionar todos" in status_selecionado else status_selecionado
+
+# Gerente
+gerente_opcoes = opcoes_com_selecionar_todos(df["Manager Name"])
+gerente_selecionado = st.sidebar.multiselect("Gerente", options=gerente_opcoes, default=["Selecionar todos"])
+gerente_filtrado = df["Manager Name"].unique() if "Selecionar todos" in gerente_selecionado else gerente_selecionado
+
+# Produto
+produto_opcoes = opcoes_com_selecionar_todos(df["Product Name"])
+produto_selecionado = st.sidebar.multiselect("Produto", options=produto_opcoes, default=["Selecionar todos"])
+produto_filtrado = df["Product Name"].unique() if "Selecionar todos" in produto_selecionado else produto_selecionado
 
 # === Range padrão do mês atual ===
 hoje = date.today()
@@ -106,9 +125,9 @@ if isinstance(data_range, (list, tuple)) and len(data_range) == 2:
     data_inicio = pd.to_datetime(data_range[0]).strftime("%d/%m/%Y")
     data_fim = pd.to_datetime(data_range[1]).strftime("%d/%m/%Y")
     df_filtrado = df[
-        df["Status"].isin(status) &
-        df["Manager Name"].isin(gerentes) &
-        df["Product Name"].isin(produtos) &
+        df["Status"].isin(status_filtrado) &
+        df["Manager Name"].isin(gerente_filtrado) &
+        df["Product Name"].isin(produto_filtrado) &
         df["Created At"].between(data_inicio, data_fim)
     ]
 else:
@@ -119,7 +138,7 @@ else:
 st.subheader(f"📋 {len(df_filtrado)} transações encontradas")
 st.dataframe(df_filtrado, use_container_width=True)
 
-# === KPIs
+# === KPIs ===
 total = df_filtrado["Amount"].sum()
 st.metric("💰 Total movimentado", f"R$ {total:,.2f}".replace(",", "X").replace(".", ",").replace("X", "."))
 
@@ -138,6 +157,7 @@ st.download_button(
     file_name="transacoes_filtradas.csv",
     mime="text/csv"
 )
+
 # === Enviar TODAS as transações para uma planilha geral ===
 try:
     creds_dict = json.loads(st.secrets["GOOGLE_CREDENTIALS"])
@@ -160,3 +180,4 @@ try:
         st.warning("⚠️ Nenhuma transação para enviar.")
 except Exception as e:
     st.error(f"❌ Erro ao enviar dados para a planilha geral: {e}")
+
