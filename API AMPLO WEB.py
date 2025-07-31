@@ -135,7 +135,7 @@ else:
     df_filtrado = df[0:0]
 
 # === Mostrar dados ===
-st.subheader(f"📋 {len(df_filtrado)} transações encontradas")
+st.subheader(f"📋 {len(df)} transações encontradas")
 st.dataframe(df_filtrado, use_container_width=True)
 
 # === KPIs ===
