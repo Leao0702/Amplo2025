@@ -20,7 +20,7 @@ def formatar_data(data_iso):
 
 # === Função de multiselect com opção 'Selecionar todos' ===
 def multiselect_com_todos(label, opcoes):
-    destaque = "👉 SELECIONAR TODOS"
+    destaque = " Selecionar Tudo"
     opcoes_modificadas = [destaque] + list(opcoes)
     selecao = st.sidebar.multiselect(
         label,
