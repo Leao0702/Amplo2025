@@ -101,21 +101,14 @@ if df.empty:
 
 # === Filtros ===
 st.sidebar.header("🔎 Filtros")
-
 status = multiselect_com_todos("Status", df["Status"].dropna().unique())
 gerentes = multiselect_com_todos("Gerente", df["Manager Name"].dropna().unique())
 produtos = multiselect_com_todos("Produto", df["Product Name"].dropna().unique())
 
-# === Range padrão do mês atual ===
-hoje = date.today()
-primeiro_dia = hoje.replace(day=1)
-if hoje.month == 12:
-    proximo_mes = hoje.replace(year=hoje.year + 1, month=1, day=1)
-else:
-    proximo_mes = hoje.replace(month=hoje.month + 1, day=1)
-ultimo_dia = proximo_mes - pd.Timedelta(days=1)
-
-data_range = st.sidebar.date_input("Período de Criação", [primeiro_dia, ultimo_dia])
+# === Filtro de data opcional (mas por padrão mostra tudo) ===
+data_minima = pd.to_datetime(df["Created At"], dayfirst=True, errors="coerce").min().date()
+data_maxima = pd.to_datetime(df["Created At"], dayfirst=True, errors="coerce").max().date()
+data_range = st.sidebar.date_input("Período de Criação", [data_minima, data_maxima])
 
 # === Aplicar filtros ===
 if isinstance(data_range, (list, tuple)) and len(data_range) == 2:
@@ -132,7 +125,7 @@ else:
     df_filtrado = df[0:0]
 
 # === Mostrar dados ===
-st.subheader(f"📋 {len(df_filtrado)} transações encontradas")
+st.subheader(f"📋 {len(df)} transações encontradas")
 st.dataframe(df_filtrado, use_container_width=True)
 
 # === KPIs ===
