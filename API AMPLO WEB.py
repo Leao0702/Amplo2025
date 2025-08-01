@@ -10,7 +10,7 @@ from google.oauth2.service_account import Credentials
 import json
 
 # === Atualização automática a cada 2 minutos ===
-st_autorefresh(interval=240 * 1000, key="auto_refresh")
+st_autorefresh(interval=120 * 1000, key="auto_refresh")
 
 # === Função para formatar data ISO ===
 def formatar_data(data_iso):
@@ -32,7 +32,7 @@ def multiselect_com_todos(label, opcoes):
     return list(opcoes) if destaque in selecao else selecao
 
 # === CACHE: carregar transações da API ===
-@st.cache_data(ttl=240)
+@st.cache_data(ttl=120)
 def carregar_transacoes():
     url_managers = "https://tracker-api.avalieempresas.live/api/managers"
     url_base_tx = "https://tracker-api.avalieempresas.live/api/transactions/manager/"
@@ -81,8 +81,7 @@ def carregar_transacoes():
                 st.warning(f"Erro ao carregar transações de {manager_name}: {e}")
                 break
 
-    df = pd.DataFrame(transacoes)
-    return df
+    return pd.DataFrame(transacoes)
 
 # === Configuração da página ===
 st.set_page_config(page_title="Painel de Transações", layout="wide")
@@ -93,7 +92,7 @@ br_tz = timezone("America/Sao_Paulo")
 hora_atual = datetime.now(br_tz).strftime('%H:%M:%S')
 st.sidebar.markdown(f"⏰ Última atualização: {hora_atual}")
 
-# === Carregar dados (com cache) ===
+# === Carregar dados (com cache e spinner único) ===
 with st.spinner("🔄 Carregando transações da API..."):
     df = carregar_transacoes()
 
