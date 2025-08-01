@@ -2,6 +2,7 @@ import streamlit as st
 import pandas as pd
 import requests
 from datetime import datetime, date
+from calendar import monthrange
 from streamlit_autorefresh import st_autorefresh
 from pytz import timezone
 import gspread
@@ -105,10 +106,11 @@ status = multiselect_com_todos("Status", df["Status"].dropna().unique())
 gerentes = multiselect_com_todos("Gerente", df["Manager Name"].dropna().unique())
 produtos = multiselect_com_todos("Produto", df["Product Name"].dropna().unique())
 
-# === Filtro de data opcional (mas por padrão mostra tudo) ===
-data_minima = pd.to_datetime(df["Created At"], dayfirst=True, errors="coerce").min().date()
-data_maxima = pd.to_datetime(df["Created At"], dayfirst=True, errors="coerce").max().date()
-data_range = st.sidebar.date_input("Período de Criação", [data_minima, data_maxima])
+# === Filtro de data com range fixo do mês atual ===
+hoje = datetime.now(br_tz).date()
+primeiro_dia = hoje.replace(day=1)
+ultimo_dia = hoje.replace(day=monthrange(hoje.year, hoje.month)[1])
+data_range = st.sidebar.date_input("Período de Criação", [primeiro_dia, ultimo_dia])
 
 # === Aplicar filtros ===
 if isinstance(data_range, (list, tuple)) and len(data_range) == 2:
