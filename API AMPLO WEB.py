@@ -12,10 +12,10 @@ import json
 # === Atualização automática a cada 2 minutos ===
 st_autorefresh(interval=120 * 1000, key="auto_refresh")
 
-# === Função para formatar data ===
+# === Função para formatar data ISO ===
 def formatar_data(data_iso):
     try:
-        return datetime.fromisoformat(data_iso.replace("Z", "+00:00"))
+        return datetime.fromisoformat(data_iso.replace("Z", "+00:00")).date()
     except Exception:
         return None
 
@@ -82,7 +82,6 @@ def carregar_transacoes():
                     break
 
         df = pd.DataFrame(transacoes)
-        df["Created At"] = pd.to_datetime(df["Created At"], errors="coerce").dt.tz_localize(None).dt.strftime("%d/%m/%Y")
         return df
 
 # === Configuração da página ===
@@ -110,12 +109,16 @@ produtos = multiselect_com_todos("Produto", df["Product Name"].dropna().unique()
 hoje = datetime.now(br_tz).date()
 primeiro_dia = hoje.replace(day=1)
 ultimo_dia = hoje.replace(day=monthrange(hoje.year, hoje.month)[1])
-data_range = st.sidebar.date_input("Período de Criação", [primeiro_dia, ultimo_dia])
+data_range = st.sidebar.date_input(
+    "Período de Criação",
+    value=[primeiro_dia, ultimo_dia],
+    format="DD/MM/YYYY"
+)
 
 # === Aplicar filtros ===
 if isinstance(data_range, (list, tuple)) and len(data_range) == 2:
-    data_inicio = pd.to_datetime(data_range[0]).strftime("%d/%m/%Y")
-    data_fim = pd.to_datetime(data_range[1]).strftime("%d/%m/%Y")
+    data_inicio = data_range[0]
+    data_fim = data_range[1]
     df_filtrado = df[
         df["Status"].isin(status) &
         df["Manager Name"].isin(gerentes) &
@@ -126,9 +129,11 @@ else:
     st.warning("Por favor, selecione um intervalo de datas válido.")
     df_filtrado = df[0:0]
 
-# === Mostrar dados ===
+# === Mostrar dados com datas formatadas para visualização ===
+df_mostrar = df_filtrado.copy()
+df_mostrar["Created At"] = df_mostrar["Created At"].apply(lambda x: x.strftime("%d/%m/%Y") if pd.notna(x) else "")
 st.subheader(f"📋 {len(df)} transações encontradas")
-st.dataframe(df_filtrado, use_container_width=True)
+st.dataframe(df_mostrar, use_container_width=True)
 
 # === KPIs ===
 total = df_filtrado["Amount"].sum()
@@ -152,7 +157,7 @@ with col4:
 # === Exportar CSV ===
 st.download_button(
     label="⬇️ Baixar dados filtrados (CSV)",
-    data=df_filtrado.to_csv(index=False).encode("utf-8"),
+    data=df_mostrar.to_csv(index=False).encode("utf-8"),
     file_name="transacoes_filtradas.csv",
     mime="text/csv"
 )
@@ -177,5 +182,8 @@ try:
         st.success(f"✅ {len(dados)} transações enviadas para a planilha geral.")
     else:
         st.warning("⚠️ Nenhuma transação para enviar.")
+except Exception as e:
+    st.error(f"❌ Erro ao enviar dados para a planilha geral: {e}")
+
 except Exception as e:
     st.error(f"❌ Erro ao enviar dados para a planilha geral: {e}")
