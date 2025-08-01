@@ -134,7 +134,7 @@ else:
 # === Mostrar dados com datas formatadas para visualização ===
 df_mostrar = df_filtrado.copy()
 df_mostrar["Created At"] = df_mostrar["Created At"].apply(lambda x: x.strftime("%d/%m/%Y") if pd.notna(x) else "")
-st.subheader(f"📋 {len(df)} transações encontradas")
+st.subheader(f"📋 {len(df)} transações na plataforma")
 st.dataframe(df_mostrar, use_container_width=True)
 
 # === KPIs ===
