@@ -175,15 +175,15 @@ try:
     aba.clear()
     cabecalhos = df.columns.tolist()
     aba.append_row(cabecalhos)
-    dados = df.values.tolist()
+
+    df_para_planilha = df.copy()
+    df_para_planilha["Created At"] = df_para_planilha["Created At"].apply(lambda x: x.strftime("%d/%m/%Y") if pd.notna(x) else "")
+    dados = df_para_planilha.values.tolist()
 
     if dados:
         aba.append_rows(dados, value_input_option="USER_ENTERED")
         st.success(f"✅ {len(dados)} transações enviadas para a planilha geral.")
     else:
         st.warning("⚠️ Nenhuma transação para enviar.")
-except Exception as e:
-    st.error(f"❌ Erro ao enviar dados para a planilha geral: {e}")
-
 except Exception as e:
     st.error(f"❌ Erro ao enviar dados para a planilha geral: {e}")
