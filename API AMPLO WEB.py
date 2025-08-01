@@ -10,7 +10,7 @@ from google.oauth2.service_account import Credentials
 import json
 
 # === Atualização automática a cada 2 minutos ===
-st_autorefresh(interval=120 * 1000, key="auto_refresh")
+st_autorefresh(interval=240 * 1000, key="auto_refresh")
 
 # === Função para formatar data ISO ===
 def formatar_data(data_iso):
@@ -32,7 +32,7 @@ def multiselect_com_todos(label, opcoes):
     return list(opcoes) if destaque in selecao else selecao
 
 # === CACHE: carregar transações da API ===
-@st.cache_data(ttl=120)
+@st.cache_data(ttl=240)
 def carregar_transacoes():
     url_managers = "https://tracker-api.avalieempresas.live/api/managers"
     url_base_tx = "https://tracker-api.avalieempresas.live/api/transactions/manager/"
