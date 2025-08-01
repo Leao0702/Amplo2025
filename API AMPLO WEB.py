@@ -31,58 +31,58 @@ def multiselect_com_todos(label, opcoes):
     )
     return list(opcoes) if destaque in selecao else selecao
 
-# === Carregar transações da API (sem cache) ===
+# === CACHE: carregar transações da API ===
+@st.cache_data(ttl=120)
 def carregar_transacoes():
-    with st.spinner("🔄 Carregando transações da API..."):
-        url_managers = "https://tracker-api.avalieempresas.live/api/managers"
-        url_base_tx = "https://tracker-api.avalieempresas.live/api/transactions/manager/"
-        transacoes = []
+    url_managers = "https://tracker-api.avalieempresas.live/api/managers"
+    url_base_tx = "https://tracker-api.avalieempresas.live/api/transactions/manager/"
+    transacoes = []
 
-        try:
-            res_managers = requests.get(url_managers)
-            res_managers.raise_for_status()
-            managers = res_managers.json()
-        except Exception as e:
-            st.error(f"Erro ao carregar gerentes: {e}")
-            return pd.DataFrame()
+    try:
+        res_managers = requests.get(url_managers)
+        res_managers.raise_for_status()
+        managers = res_managers.json()
+    except Exception as e:
+        st.error(f"Erro ao carregar gerentes: {e}")
+        return pd.DataFrame()
 
-        for manager in managers:
-            manager_id = manager.get("manager_id")
-            manager_name = manager.get("name")
-            page = 1
+    for manager in managers:
+        manager_id = manager.get("manager_id")
+        manager_name = manager.get("name")
+        page = 1
 
-            while True:
-                url = f"{url_base_tx}{manager_id}?page={page}&limit=100&startDate=2000-01-01"
-                try:
-                    res_tx = requests.get(url)
-                    if res_tx.status_code != 200:
-                        break
-
-                    data = res_tx.json()
-                    txs = data.get("transactions", [])
-                    if not txs:
-                        break
-
-                    for tx in txs:
-                        transacoes.append({
-                            "Manager Name": manager_name,
-                            "Manager ID": manager_id,
-                            "Transaction ID": str(tx.get("id")),
-                            "Client Name": tx.get("clientName", ""),
-                            "Amount": tx.get("amount", 0.0),
-                            "Created At": formatar_data(tx.get("createdAt")),
-                            "Status": tx.get("status", ""),
-                            "UTM Source": tx.get("utm_source", ""),
-                            "Product Name": tx.get("productName", "")
-                        })
-
-                    page += 1
-                except Exception as e:
-                    st.warning(f"Erro ao carregar transações de {manager_name}: {e}")
+        while True:
+            url = f"{url_base_tx}{manager_id}?page={page}&limit=100&startDate=2000-01-01"
+            try:
+                res_tx = requests.get(url)
+                if res_tx.status_code != 200:
                     break
 
-        df = pd.DataFrame(transacoes)
-        return df
+                data = res_tx.json()
+                txs = data.get("transactions", [])
+                if not txs:
+                    break
+
+                for tx in txs:
+                    transacoes.append({
+                        "Manager Name": manager_name,
+                        "Manager ID": manager_id,
+                        "Transaction ID": str(tx.get("id")),
+                        "Client Name": tx.get("clientName", ""),
+                        "Amount": tx.get("amount", 0.0),
+                        "Created At": formatar_data(tx.get("createdAt")),
+                        "Status": tx.get("status", ""),
+                        "UTM Source": tx.get("utm_source", ""),
+                        "Product Name": tx.get("productName", "")
+                    })
+
+                page += 1
+            except Exception as e:
+                st.warning(f"Erro ao carregar transações de {manager_name}: {e}")
+                break
+
+    df = pd.DataFrame(transacoes)
+    return df
 
 # === Configuração da página ===
 st.set_page_config(page_title="Painel de Transações", layout="wide")
@@ -93,8 +93,10 @@ br_tz = timezone("America/Sao_Paulo")
 hora_atual = datetime.now(br_tz).strftime('%H:%M:%S')
 st.sidebar.markdown(f"⏰ Última atualização: {hora_atual}")
 
-# === Carregar dados ===
-df = carregar_transacoes()
+# === Carregar dados (com cache) ===
+with st.spinner("🔄 Carregando transações da API..."):
+    df = carregar_transacoes()
+
 if df.empty:
     st.warning("Nenhuma transação foi encontrada.")
     st.stop()
