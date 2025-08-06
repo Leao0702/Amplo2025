@@ -106,7 +106,7 @@ st.sidebar.header("🔎 Filtros")
 status = multiselect_com_todos("Status", df["Status"].dropna().unique())
 gerentes = multiselect_com_todos("Gerente", df["Manager Name"].dropna().unique())
 produtos = multiselect_com_todos("Produto", df["Product Name"].dropna().unique())
-utm_sources = multiselect_com_todos("UTM Source", df["UTM Source"].dropna().unique())  # NOVO FILTRO
+utm_sources = multiselect_com_todos("UTM Source", df["UTM Source"].dropna().unique())
 
 # === Filtro de data com range fixo do mês atual ===
 hoje = datetime.now(br_tz).date()
@@ -126,16 +126,18 @@ if isinstance(data_range, (list, tuple)) and len(data_range) == 2:
         df["Status"].isin(status) &
         df["Manager Name"].isin(gerentes) &
         df["Product Name"].isin(produtos) &
-        df["UTM Source"].isin(utm_sources) &  # APLICADO FILTRO
+        df["UTM Source"].isin(utm_sources) &
         df["Created At"].between(data_inicio, data_fim)
     ]
 else:
     st.warning("Por favor, selecione um intervalo de datas válido.")
     df_filtrado = df[0:0]
 
-# === Mostrar dados com datas formatadas para visualização ===
+# === Mostrar dados formatados ===
 df_mostrar = df_filtrado.copy()
 df_mostrar["Created At"] = df_mostrar["Created At"].apply(lambda x: x.strftime("%d/%m/%Y") if pd.notna(x) else "")
+df_mostrar["Amount"] = df_mostrar["Amount"].apply(lambda x: f"R$ {x:,.2f}".replace(",", "X").replace(".", ",").replace("X", "."))
+
 st.subheader(f"📋 {len(df)} transações na plataforma")
 st.dataframe(df_mostrar, use_container_width=True)
 
