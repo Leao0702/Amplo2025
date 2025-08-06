@@ -9,7 +9,7 @@ import gspread
 from google.oauth2.service_account import Credentials
 import json
 
-# === Atualização automática a cada 2 minutos ===
+# === Atualização automática a cada 4 minutos ===
 st_autorefresh(interval=240 * 1000, key="auto_refresh")
 
 # === Função para formatar data ISO ===
@@ -106,6 +106,7 @@ st.sidebar.header("🔎 Filtros")
 status = multiselect_com_todos("Status", df["Status"].dropna().unique())
 gerentes = multiselect_com_todos("Gerente", df["Manager Name"].dropna().unique())
 produtos = multiselect_com_todos("Produto", df["Product Name"].dropna().unique())
+utm_sources = multiselect_com_todos("UTM Source", df["UTM Source"].dropna().unique())  # NOVO FILTRO
 
 # === Filtro de data com range fixo do mês atual ===
 hoje = datetime.now(br_tz).date()
@@ -125,6 +126,7 @@ if isinstance(data_range, (list, tuple)) and len(data_range) == 2:
         df["Status"].isin(status) &
         df["Manager Name"].isin(gerentes) &
         df["Product Name"].isin(produtos) &
+        df["UTM Source"].isin(utm_sources) &  # APLICADO FILTRO
         df["Created At"].between(data_inicio, data_fim)
     ]
 else:
