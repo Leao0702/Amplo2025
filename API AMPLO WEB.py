@@ -12,10 +12,15 @@ import json
 # === Atualização automática a cada 4 minutos ===
 st_autorefresh(interval=240 * 1000, key="auto_refresh")
 
-# === Função para formatar data ISO ===
+# === Fuso horário de Brasília ===
+br_tz = timezone("America/Sao_Paulo")
+
+# === Função para formatar data ISO ajustando para fuso de Brasília ===
 def formatar_data(data_iso):
     try:
-        return datetime.fromisoformat(data_iso.replace("Z", "+00:00")).date()
+        utc_dt = datetime.fromisoformat(data_iso.replace("Z", "+00:00"))
+        br_dt = utc_dt.astimezone(br_tz)
+        return br_dt.date()
     except Exception:
         return None
 
@@ -69,7 +74,7 @@ def carregar_transacoes():
                         "Manager ID": manager_id,
                         "Transaction ID": str(tx.get("id")),
                         "Client Name": tx.get("clientName", ""),
-                        "Amount": tx.get("amount", 0.0),
+                        "Amount": round(tx.get("amount", 0.0), 2),
                         "Created At": formatar_data(tx.get("createdAt")),
                         "Status": tx.get("status", ""),
                         "UTM Source": tx.get("utm_source", ""),
@@ -81,15 +86,13 @@ def carregar_transacoes():
                 st.warning(f"Erro ao carregar transações de {manager_name}: {e}")
                 break
 
-    df = pd.DataFrame(transacoes)
-    return df
+    return pd.DataFrame(transacoes)
 
 # === Configuração da página ===
 st.set_page_config(page_title="Painel de Transações", layout="wide")
 st.title("📊 Painel de Transações Amplo - API em Tempo Real")
 
 # === Timestamp de atualização com fuso de Brasília ===
-br_tz = timezone("America/Sao_Paulo")
 hora_atual = datetime.now(br_tz).strftime('%H:%M:%S')
 st.sidebar.markdown(f"⏰ Última atualização: {hora_atual}")
 
@@ -133,7 +136,7 @@ else:
     st.warning("Por favor, selecione um intervalo de datas válido.")
     df_filtrado = df[0:0]
 
-# === Mostrar dados formatados ===
+# === Mostrar dados com datas e valores formatados ===
 df_mostrar = df_filtrado.copy()
 df_mostrar["Created At"] = df_mostrar["Created At"].apply(lambda x: x.strftime("%d/%m/%Y") if pd.notna(x) else "")
 df_mostrar["Amount"] = df_mostrar["Amount"].apply(lambda x: f"R$ {x:,.2f}".replace(",", "X").replace(".", ",").replace("X", "."))
@@ -142,9 +145,10 @@ st.subheader(f"📋 {len(df)} transações na plataforma")
 st.dataframe(df_mostrar, use_container_width=True)
 
 # === KPIs ===
-total = df_filtrado["Amount"].sum()
-count_paid = df_filtrado[df_filtrado["Status"] == "paid"].shape[0]
-count_pending = df_filtrado[df_filtrado["Status"] == "pending"].shape[0]
+df_valores = df_filtrado.copy()
+total = df_valores["Amount"].sum()
+count_paid = df_valores[df_valores["Status"] == "paid"].shape[0]
+count_pending = df_valores[df_valores["Status"] == "pending"].shape[0]
 total_considerado = count_paid + count_pending
 percentual_conversao = (count_paid / total_considerado * 100) if total_considerado > 0 else 0
 
